@@ -265,43 +265,6 @@ svg .node-new circle{fill:#dcfce7!important;stroke:#16a34a!important;stroke-widt
 .def-card-body{font-size:12.5px;color:var(--text2);line-height:1.65}
 .def-card-ex{font-family:var(--mono);font-size:11.5px;background:var(--surface);border-radius:5px;padding:5px 9px;margin-top:8px;color:var(--text);border:1px solid var(--border);display:block;white-space:pre-wrap}
 
-/* ── AMBIGUITY BANNER ── */
-#ambiguity-banner{
-  display:none;
-  align-items:flex-start;
-  gap:12px;
-  background:var(--yellow-bg);
-  border:2px solid var(--yellow);
-  border-radius:var(--r-sm);
-  padding:13px 16px;
-  margin-bottom:14px;
-  animation:ambig-in .3s ease;
-}
-#ambiguity-banner.show{display:flex}
-@keyframes ambig-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.ambig-icon{
-  font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));
-}
-.ambig-body{flex:1;min-width:0}
-.ambig-title{
-  font-family:var(--mono);font-size:12.5px;font-weight:700;
-  color:#92400e;letter-spacing:.02em;margin-bottom:4px;
-  display:flex;align-items:center;gap:7px;
-}
-body.dark .ambig-title{color:var(--yellow)}
-.ambig-badge{
-  display:inline-block;font-size:10px;font-weight:700;
-  background:var(--yellow);color:#451a03;
-  padding:2px 8px;border-radius:20px;letter-spacing:.06em;
-  text-transform:uppercase;
-}
-body.dark .ambig-badge{color:#1c1917}
-.ambig-desc{font-size:12.5px;color:#78350f;line-height:1.6}
-body.dark .ambig-desc{color:var(--text2)}
-.ambig-desc b{font-weight:700;color:#92400e}
-body.dark .ambig-desc b{color:var(--yellow)}
-
 @media(max-width:800px){
   .deriv-grid,.ex-grid,.input-grid{grid-template-columns:1fr}
   header{padding:0 16px}
@@ -462,19 +425,6 @@ B -> bB | b</textarea>
     <div id="rule-box">
       <div class="rb-label">Rule Applied</div>
       <div class="rb-rule" id="rule-text">—</div>
-    </div>
-    <div id="ambiguity-banner">
-      <div class="ambig-icon">⚠️</div>
-      <div class="ambig-body">
-        <div class="ambig-title">
-          <span class="ambig-badge">Ambiguous</span>
-          This CFG is ambiguous for the given string
-        </div>
-        <div class="ambig-desc">
-          Multiple distinct parse trees can derive <b id="ambig-string-label"></b> from this grammar.
-          One of the possible parse trees is displayed below.
-        </div>
-      </div>
     </div>
     <div id="tree-wrap">
       <div class="ph">
@@ -1418,188 +1368,8 @@ function renderAndScroll(which) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// 9b. AMBIGUITY DETECTION
-// A CFG is ambiguous for a string if it has ≥2 distinct parse trees.
-// Strategy: run a full backtracking search that collects ALL parse trees
-// (up to 2) by not stopping at the first result. If we find 2, ambiguous.
+// 9. STATUS HELPERS
 // ══════════════════════════════════════════════════════════════════
-function detectAmbiguity(rules, levels, startVar, inputString, level) {
-  const MAX_DEPTH = 200;
-  const MAX_TREES = 2; // we only need to find 2 to confirm ambiguity
-
-  // Serialize a tree to a canonical string for structural comparison
-  function serializeTree(node) {
-    if (!node) return 'null';
-    const childStr = (node.children || []).map(serializeTree).join(',');
-    return `${node.symbol}[${childStr}]`;
-  }
-
-  function producedBefore(varName, s, lvl) {
-    for (let l = 1; l < lvl; l++) {
-      if (levels[l] && levels[l][varName] && levels[l][varName].has(s)) return true;
-    }
-    return false;
-  }
-
-  const foundTrees = [];
-
-  function backtrackAll(varName, string, lvl, depth) {
-    if (depth > MAX_DEPTH) return;
-    if (foundTrees.length >= MAX_TREES) return;
-
-    const node = { symbol: varName, string, children: [] };
-
-    for (const prod of rules[varName]) {
-      if (foundTrees.length >= MAX_TREES) return;
-
-      if (prod.every(sym => !(sym in rules))) {
-        // Terminal-only production
-        const candidate = prod.filter(s => s !== '').join('');
-        if (candidate === string) {
-          const childNode = JSON.parse(JSON.stringify(node)); // fresh copy
-          if (string === '') {
-            childNode.children = [{ symbol: 'ε', string: '', children: [], isEpsilon: true }];
-          } else {
-            childNode.children = prod.filter(s => s !== '').map(sym => ({
-              symbol: sym, string: sym, children: []
-            }));
-          }
-          const ser = serializeTree(childNode);
-          if (!foundTrees.some(t => serializeTree(t) === ser)) {
-            foundTrees.push(childNode);
-          }
-        }
-        continue;
-      }
-
-      // Mixed/recursive production — try all splits
-      function trySplitAll(i, pos, childrenSoFar) {
-        if (foundTrees.length >= MAX_TREES) return;
-        if (i === prod.length) {
-          if (pos !== string.length) return;
-          // Build full node
-          const completedNode = { symbol: varName, string, children: childrenSoFar };
-          const ser = serializeTree(completedNode);
-          if (!foundTrees.some(t => serializeTree(t) === ser)) {
-            foundTrees.push(completedNode);
-          }
-          return;
-        }
-
-        const sym = prod[i];
-        if (sym in rules) {
-          // Try all possible spans for this non-terminal (including ε)
-          const ends = [];
-          for (let e = pos + 1; e <= string.length; e++) ends.push(e);
-          ends.push(pos); // epsilon last
-
-          for (const end of ends) {
-            if (foundTrees.length >= MAX_TREES) return;
-            const part = string.slice(pos, end);
-            if (!producedBefore(sym, part, lvl)) continue;
-
-            // Recurse: collect all sub-trees for (sym, part)
-            const savedCount = foundTrees.length;
-            const subTrees = collectSubTrees(sym, part, lvl, depth + 1);
-            for (const subTree of subTrees) {
-              if (foundTrees.length >= MAX_TREES) return;
-              trySplitAll(i + 1, end, [...childrenSoFar, subTree]);
-            }
-          }
-        } else {
-          // Terminal symbol
-          if (string.startsWith(sym, pos)) {
-            const termChild = { symbol: sym, string: sym, children: [] };
-            trySplitAll(i + 1, pos + sym.length, [...childrenSoFar, termChild]);
-          }
-        }
-      }
-
-      trySplitAll(0, 0, []);
-    }
-  }
-
-  // Collect all sub-trees for a (var, string) pair without polluting foundTrees
-  function collectSubTrees(varName, string, lvl, depth) {
-    if (depth > MAX_DEPTH) return [];
-    const results = [];
-    const MAX_SUB = 4; // limit subtree enumeration to keep it fast
-
-    for (const prod of rules[varName]) {
-      if (results.length >= MAX_SUB) break;
-
-      if (prod.every(sym => !(sym in rules))) {
-        const candidate = prod.filter(s => s !== '').join('');
-        if (candidate === string) {
-          const node = { symbol: varName, string, children: [] };
-          if (string === '') {
-            node.children = [{ symbol: 'ε', string: '', children: [], isEpsilon: true }];
-          } else {
-            node.children = prod.filter(s => s !== '').map(sym => ({
-              symbol: sym, string: sym, children: []
-            }));
-          }
-          const ser = serializeTree(node);
-          if (!results.some(t => serializeTree(t) === ser)) results.push(node);
-        }
-        continue;
-      }
-
-      function trySub(i, pos, childrenSoFar) {
-        if (results.length >= MAX_SUB) return;
-        if (i === prod.length) {
-          if (pos !== string.length) return;
-          const node = { symbol: varName, string, children: childrenSoFar };
-          const ser = serializeTree(node);
-          if (!results.some(t => serializeTree(t) === ser)) results.push(node);
-          return;
-        }
-        const sym = prod[i];
-        if (sym in rules) {
-          const ends = [];
-          for (let e = pos + 1; e <= string.length; e++) ends.push(e);
-          ends.push(pos);
-          for (const end of ends) {
-            if (results.length >= MAX_SUB) return;
-            const part = string.slice(pos, end);
-            if (!producedBefore(sym, part, lvl)) continue;
-            const subTrees = collectSubTrees(sym, part, lvl, depth + 1);
-            for (const st of subTrees) {
-              if (results.length >= MAX_SUB) return;
-              trySub(i + 1, end, [...childrenSoFar, st]);
-            }
-          }
-        } else {
-          if (string.startsWith(sym, pos)) {
-            const termChild = { symbol: sym, string: sym, children: [] };
-            trySub(i + 1, pos + sym.length, [...childrenSoFar, termChild]);
-          }
-        }
-      }
-      trySub(0, 0, []);
-    }
-    return results;
-  }
-
-  try {
-    backtrackAll(startVar, inputString, level, 0);
-    return foundTrees.length >= 2;
-  } catch(e) {
-    return false; // fail safe — don't block the main flow
-  }
-}
-
-function showAmbiguityBanner(inputStr) {
-  const banner = document.getElementById('ambiguity-banner');
-  document.getElementById('ambig-string-label').textContent =
-    inputStr ? `"${inputStr}"` : 'ε (empty string)';
-  banner.classList.add('show');
-}
-function hideAmbiguityBanner() {
-  document.getElementById('ambiguity-banner').classList.remove('show');
-}
-
-
 function showStatus(msg, type) {
   const el = document.getElementById('status');
   el.className = `status show status-${type}`;
@@ -1624,7 +1394,6 @@ function hideValErrors() {
 function onGenerate() {
   hideStatus();
   hideValErrors();
-  hideAmbiguityBanner();
 
   const gramText = document.getElementById('gram').value.trim();
   const startVar = document.getElementById('start').value.trim();
@@ -1672,12 +1441,6 @@ function onGenerate() {
 
     showStatus(`✓ String accepted — Parse tree and derivations ready.`, 'ok');
 
-    // Detect ambiguity (separate from the main parse — runs after success)
-    try {
-      const isAmbiguous = detectAmbiguity(rules, levels, startVar, inputStr, level);
-      if (isAmbiguous) showAmbiguityBanner(inputStr);
-    } catch(e) { /* fail safe */ }
-
     // Setup tree animation
     const { steps: taSteps, nodeMap } = buildTreeAnimSteps(tree, rules);
     TA.tree = tree; TA.rules = rules; TA.steps = taSteps; TA.nodeMap = nodeMap;
@@ -1705,7 +1468,6 @@ function onGenerate() {
 function onClear() {
   hideStatus();
   hideValErrors();
-  hideAmbiguityBanner();
   document.getElementById('gram').value = '';
   document.getElementById('start').value = '';
   document.getElementById('istr').value = '';
