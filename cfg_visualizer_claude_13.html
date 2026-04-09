@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CFG Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --surface3: #e8e7e0;
+  --border: #dddbd2;
+  --border2: #ccc9be;
+  --blue: #2055d4;
+  --blue-light: #e8eefb;
+  --blue-mid: #b8cbf5;
+  --purple: #6d28d9;
+  --purple-light: #ede9fe;
+  --yellow: #f59e0b;
+  --yellow-light: #fef3c7;
+  --yellow-bg: #fffbeb;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --text: #1c1917;
+  --text2: #57534e;
+  --text3: #a8a29e;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+  --r: 10px;
+  --r-sm: 6px;
+  --shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.08);
+}
+
+body.dark {
+  --bg: #0f0e0d;
+  --surface: #1a1917;
+  --surface2: #232220;
+  --surface3: #2c2b28;
+  --border: #333230;
+  --border2: #46443f;
+  --blue: #4f8ef7;
+  --blue-light: #1a2540;
+  --blue-mid: #2a3f6e;
+  --purple: #a78bfa;
+  --purple-light: #2d1f5e;
+  --yellow: #fbbf24;
+  --yellow-light: #3d2e00;
+  --yellow-bg: #2a2000;
+  --green: #4ade80;
+  --green-light: #0f2d1a;
+  --red: #f87171;
+  --red-light: #2d1010;
+  --text: #f5f3f0;
+  --text2: #c4bfb8;
+  --text3: #6b6762;
+  --shadow: 0 1px 4px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.3);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.4), 0 8px 32px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;transition:background .25s,color .25s}
+
+header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 40px;height:60px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 0 var(--border),0 2px 12px rgba(0,0,0,.05);
+}
+.logo{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  padding:5px 10px;border-radius:6px;text-transform:uppercase;
+}
+header h1{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);letter-spacing:-.02em}
+.header-right{margin-left:auto;font-size:12px;color:var(--text3);font-weight:500;display:flex;align-items:center;gap:12px}
+
+.dark-toggle{
+  height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--surface2);cursor:pointer;
+  display:flex;align-items:center;gap:7px;
+  font-size:13px;font-family:var(--sans);font-weight:600;color:var(--text2);
+  transition:all .2s;flex-shrink:0;white-space:nowrap;
+}
+.dark-toggle:hover{background:var(--surface3);border-color:var(--border2);transform:scale(1.04)}
+#dark-icon{font-size:15px;line-height:1}
+#dark-label{font-size:12.5px}
+
+main{max-width:1220px;margin:0 auto;padding:32px 24px;display:flex;flex-direction:column;gap:24px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-head{padding:18px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ch-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.01em}
+.ch-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.card-body{padding:24px}
+
+.input-grid{display:grid;grid-template-columns:1fr 160px 200px;gap:16px;align-items:start}
+label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+textarea,input[type=text]{
+  width:100%;font-family:var(--mono);font-size:12.5px;
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);
+  color:var(--text);padding:10px 12px;resize:vertical;
+  transition:border-color .15s,box-shadow .15s;line-height:1.75;
+}
+textarea{min-height:120px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
+.hint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5}
+
+/* ── QUICK INSERT BUTTONS ── */
+.quick-insert{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.quick-insert-label{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.qbtn{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--text2);cursor:pointer;
+  transition:all .15s;line-height:1;
+}
+.qbtn:hover{background:var(--blue);color:#fff;border-color:var(--blue);transform:scale(1.06)}
+
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.btn{padding:9px 20px;border-radius:var(--r-sm);font-family:var(--sans);font-size:13.5px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;gap:7px;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1a44b8;transform:translateY(-1px);box-shadow:0 4px 16px rgba(32,85,212,.3)}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--surface3);border-color:var(--border2)}
+
+.status{padding:10px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:500;display:none;align-items:center;gap:8px;margin-bottom:16px}
+.status.show{display:flex}
+.status-ok{background:var(--green-light);border:1px solid #86efac;color:#15803d}
+.status-err{background:var(--red-light);border:1px solid #fca5a5;color:var(--red)}
+.status-info{background:var(--blue-light);border:1px solid var(--blue-mid);color:var(--blue)}
+
+/* ── VALIDATION ERROR LIST ── */
+.val-errors{
+  display:none;flex-direction:column;gap:5px;
+  background:var(--red-light);border:1.5px solid #fca5a5;border-radius:var(--r-sm);
+  padding:12px 14px;margin-bottom:14px;
+}
+.val-errors.show{display:flex}
+.val-err-title{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.val-err-item{font-size:12.5px;color:var(--red);font-family:var(--mono);display:flex;align-items:flex-start;gap:6px}
+.val-err-item::before{content:'✕';font-size:11px;margin-top:2px;flex-shrink:0}
+
+.deriv-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dpanel{border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2)}
+.dpanel-head{padding:11px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--surface)}
+.dpanel-badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:var(--mono);letter-spacing:.04em}
+.badge-lmd{background:var(--blue-light);color:var(--blue)}
+.badge-rmd{background:var(--purple-light);color:var(--purple)}
+.dpanel-title{font-size:13px;font-weight:600;color:var(--text)}
+
+.step-list{padding:12px;min-height:240px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;font-family:var(--mono);font-size:12.5px}
+.step-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;opacity:0;transform:translateX(-6px);transition:opacity .35s ease,transform .35s ease,background .2s;position:relative}
+.step-row.vis{opacity:1;transform:none}
+.step-row.active{background:var(--yellow-bg);border-left:3px solid var(--yellow);padding-left:7px}
+.snum{font-size:10px;color:var(--text3);min-width:52px;font-weight:600}
+.sarrow{color:var(--text3);font-size:11px;margin-right:2px}
+.sstr{flex:1;word-break:break-all;line-height:2;padding-right:100px}
+.sstr .nt{color:var(--blue);font-weight:700}
+.sstr .hl-var{background:var(--yellow-light);border-radius:3px;padding:0 2px;color:#92400e;font-weight:700;outline:2px solid var(--yellow);outline-offset:0px}
+.sstr .hl-new{background:var(--green-light);border-radius:3px;padding:0 2px;color:#166534}
+.sstr .term{color:var(--green)}
+.sstr .eps{color:#d97706;font-style:italic}
+
+/* ── STEP RULE BADGE ── */
+.srule{
+  position:absolute;top:4px;right:6px;
+  font-family:var(--mono);font-size:9.5px;font-weight:700;
+  padding:2px 7px;border-radius:20px;
+  pointer-events:none;white-space:nowrap;
+  opacity:0;transition:opacity .3s;
+}
+.step-row.vis .srule{opacity:1}
+#lmd-list .srule{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-mid)}
+#rmd-list .srule{background:var(--purple-light);color:var(--purple);border:1px solid rgba(109,40,217,.35)}
+
+.dpanel-ctrl{padding:9px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:7px;background:var(--surface)}
+.cbtn{width:30px;height:30px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text2);transition:all .15s}
+.cbtn:hover:not(:disabled){background:var(--blue);color:#fff;border-color:var(--blue)}
+.cbtn:disabled{opacity:.3;cursor:not-allowed}
+.cbtn-animate{width:auto;padding:0 14px;font-size:12px;font-weight:700;background:var(--blue-light);color:var(--blue);border-color:var(--blue-mid)}
+.cbtn-animate:hover:not(:disabled){background:var(--blue);color:#fff;border-color:var(--blue)}
+.step-ind{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+
+#tree-wrap{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r);min-height:260px;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px}
+#tree-wrap svg{display:block}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:220px;width:100%;color:var(--text3)}
+.ph svg{opacity:.25}
+.ph p{font-size:13px}
+
+.ex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ex-card{border:1.5px solid var(--border);border-radius:var(--r);padding:16px;padding-right:58px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;background:var(--surface2)}
+.ex-card::after{content:'↗ Load';position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.ex-card:hover{border-color:var(--blue);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.ex-card:hover::after{color:var(--blue)}
+.ex-stripe{height:3px;border-radius:99px;margin-bottom:12px}
+.ex-name{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.ex-grammar{font-family:var(--mono);font-size:11.5px;color:var(--text);line-height:1.85;white-space:pre-wrap}
+.ex-str{font-family:var(--mono);font-size:11.5px;color:var(--text2);margin-top:8px}
+.ex-str b{color:var(--blue)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── PARSE TREE ANIMATION ── */
+.tree-anim-ctrl{
+  padding:10px 16px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;background:var(--surface);
+  border-radius:0 0 var(--r) var(--r);
+}
+.tree-anim-ctrl .step-ind{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+
+#rule-box{
+  display:none;
+  position:absolute;top:12px;right:12px;
+  background:var(--surface);border:1.5px solid var(--blue);border-radius:8px;
+  padding:9px 13px;min-width:160px;max-width:220px;
+  box-shadow:var(--shadow-md);z-index:10;
+  pointer-events:none;
+}
+#rule-box.show{display:block}
+#rule-box .rb-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+#rule-box .rb-rule{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)}
+.tree-card-body{padding:16px;position:relative}
+
+/* highlighted node in animated tree */
+svg .node-hl circle{fill:#fef3c7!important;stroke:#f59e0b!important;stroke-width:3.5!important;filter:drop-shadow(0 0 6px rgba(245,158,11,.5))}
+svg .node-new circle{fill:#dcfce7!important;stroke:#16a34a!important;stroke-width:2.5!important;filter:drop-shadow(0 0 5px rgba(22,163,74,.4))}
+
+/* ── DEFINITIONS TOOLTIP ── */
+.def-bar{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;border-top:1px solid var(--border);background:var(--surface2);border-radius:0 0 var(--r) var(--r)}
+.def-btn{
+  position:relative;display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;font-weight:600;color:var(--text2);
+  background:var(--surface);border:1.5px solid var(--border);border-radius:20px;
+  padding:4px 11px;cursor:pointer;transition:all .15s;font-family:var(--sans);
+  user-select:none;
+}
+.def-btn .def-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);opacity:.7}
+.def-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.def-tooltip{
+  display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+  padding:12px 14px;width:260px;box-shadow:var(--shadow-md);z-index:300;
+  pointer-events:none;
+}
+.def-tooltip.right{left:auto;right:0;transform:none}
+.def-tooltip.left{left:0;transform:none}
+.def-btn:hover .def-tooltip{display:block}
+.def-tooltip .dt-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);margin-bottom:5px}
+.def-tooltip .dt-body{font-size:12px;color:var(--text2);line-height:1.6}
+.def-tooltip .dt-example{font-family:var(--mono);font-size:11px;background:var(--surface2);border-radius:5px;padding:4px 8px;margin-top:6px;color:var(--text);display:block}
+
+/* ── DEFINITIONS SECTION ── */
+.defs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.def-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px}
+.def-card-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.def-card-icon{font-size:14px}
+.def-card-body{font-size:12.5px;color:var(--text2);line-height:1.65}
+.def-card-ex{font-family:var(--mono);font-size:11.5px;background:var(--surface);border-radius:5px;padding:5px 9px;margin-top:8px;color:var(--text);border:1px solid var(--border);display:block;white-space:pre-wrap}
+
+/* ── AMBIGUITY BANNER ── */
+#ambiguity-banner{
+  display:none;
+  align-items:flex-start;
+  gap:12px;
+  background:var(--yellow-bg);
+  border:2px solid var(--yellow);
+  border-radius:var(--r-sm);
+  padding:13px 16px;
+  margin-bottom:14px;
+  animation:ambig-in .3s ease;
+}
+#ambiguity-banner.show{display:flex}
+@keyframes ambig-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ambig-icon{
+  font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));
+}
+.ambig-body{flex:1;min-width:0}
+.ambig-title{
+  font-family:var(--mono);font-size:12.5px;font-weight:700;
+  color:#92400e;letter-spacing:.02em;margin-bottom:4px;
+  display:flex;align-items:center;gap:7px;
+}
+body.dark .ambig-title{color:var(--yellow)}
+.ambig-badge{
+  display:inline-block;font-size:10px;font-weight:700;
+  background:var(--yellow);color:#451a03;
+  padding:2px 8px;border-radius:20px;letter-spacing:.06em;
+  text-transform:uppercase;
+}
+body.dark .ambig-badge{color:#1c1917}
+.ambig-desc{font-size:12.5px;color:#78350f;line-height:1.6}
+body.dark .ambig-desc{color:var(--text2)}
+.ambig-desc b{font-weight:700;color:#92400e}
+body.dark .ambig-desc b{color:var(--yellow)}
+
+@media(max-width:800px){
+  .deriv-grid,.ex-grid,.input-grid{grid-template-columns:1fr}
+  header{padding:0 16px}
+  main{padding:16px 12px}
+  .defs-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CFG</div>
+  <h1>Grammar Visualizer</h1>
+  <div class="header-right">
+    <span>Parse · Derive · Animate</span>
+    <button class="dark-toggle" id="dark-btn" onclick="toggleDark()" title="Toggle dark mode">
+      <span id="dark-icon">🌙</span>
+      <span id="dark-label">Dark Mode</span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- INPUT -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-icon" style="background:#eff6ff">⌨️</div>
+    <div>
+      <div class="ch-title">Grammar &amp; String Input</div>
+      <div class="ch-sub">Enter productions, start variable, and the string to parse</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="status" class="status"></div>
+    <div id="val-errors" class="val-errors">
+      <div class="val-err-title">⚠ Validation Errors</div>
+      <div id="val-err-list"></div>
+    </div>
+    <div class="input-grid">
+      <div>
+        <label>Productions</label>
+        <textarea id="gram" spellcheck="false">S -> AB
+A -> aA | a
+B -> bB | b</textarea>
+        <p class="hint">Separate alternatives with <code>|</code>. Use the <b>ε</b> button to insert an epsilon (empty) alternative.</p>
+        <div class="quick-insert">
+          <span class="quick-insert-label">Insert:</span>
+          <button class="qbtn" title="Insert arrow (->)" onclick="insertIntoGram(' -> ')">→</button>
+          <button class="qbtn" title="Insert pipe (|)" onclick="insertIntoGram(' | ')">|</button>
+          <button class="qbtn" title="Insert epsilon (empty alternative)" onclick="insertEpsilonInGram()">ε</button>
+        </div>
+      </div>
+      <div>
+        <label>Start Variable</label>
+        <input type="text" id="start" value="S" maxlength="8"/>
+        <p class="hint">Must match a production LHS.</p>
+      </div>
+      <div>
+        <label>Input String</label>
+        <input type="text" id="istr" value="aaabbb"/>
+        <p class="hint">Terminals only. Leave empty for ε.</p>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="onGenerate()">▶&nbsp; Generate</button>
+      <button class="btn btn-ghost" onclick="onClear()">✕&nbsp; Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- DERIVATION -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-icon" style="background:#eff6ff">⚡</div>
+    <div>
+      <div class="ch-title">Derivation Steps</div>
+      <div class="ch-sub">Both derivations are generated from the parse tree</div>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="def-bar">
+      <button class="def-btn">
+        <span class="def-dot"></span>Leftmost Derivation
+        <div class="def-tooltip left">
+          <div class="dt-title">Leftmost Derivation</div>
+          <div class="dt-body">At each step, the leftmost non-terminal in the sentential form is replaced.</div>
+          <code class="dt-example">S ⇒ AB ⇒ aAB ⇒ aaB ⇒ aabb</code>
+        </div>
+      </button>
+      <button class="def-btn">
+        <span class="def-dot" style="background:var(--purple)"></span>Rightmost Derivation
+        <div class="def-tooltip">
+          <div class="dt-title">Rightmost Derivation</div>
+          <div class="dt-body">At each step, the rightmost non-terminal in the sentential form is replaced.</div>
+          <code class="dt-example">S ⇒ AB ⇒ AbB ⇒ Abb ⇒ aabb</code>
+        </div>
+      </button>
+      <button class="def-btn">
+        <span class="def-dot" style="background:var(--yellow)"></span>Sentential Form
+        <div class="def-tooltip">
+          <div class="dt-title">Sentential Form</div>
+          <div class="dt-body">An intermediate string of variables and terminals produced during derivation. Yellow highlight = next variable to expand.</div>
+        </div>
+      </button>
+    </div>
+    <div style="padding:16px">
+    <div class="deriv-grid">
+      <div class="dpanel">
+        <div class="dpanel-head">
+          <span class="dpanel-badge badge-lmd">LMD</span>
+          <span class="dpanel-title">Leftmost Derivation</span>
+        </div>
+        <div class="step-list" id="lmd-list">
+          <div class="ph"><p>Generate to see steps</p></div>
+        </div>
+        <div class="dpanel-ctrl">
+          <button class="cbtn" title="Play"  onclick="ctrl('lmd','play')">▶</button>
+          <button class="cbtn" title="Pause" onclick="ctrl('lmd','pause')" id="lmd-pause" disabled>⏸</button>
+          <button class="cbtn" title="Reset" onclick="ctrl('lmd','reset')">↺</button>
+          <button class="cbtn" title="Prev"  onclick="ctrl('lmd','prev')">‹</button>
+          <button class="cbtn" title="Next"  onclick="ctrl('lmd','next')">›</button>
+          <span class="step-ind" id="lmd-ind">—</span>
+        </div>
+      </div>
+      <div class="dpanel">
+        <div class="dpanel-head">
+          <span class="dpanel-badge badge-rmd">RMD</span>
+          <span class="dpanel-title">Rightmost Derivation</span>
+        </div>
+        <div class="step-list" id="rmd-list">
+          <div class="ph"><p>Generate to see steps</p></div>
+        </div>
+        <div class="dpanel-ctrl">
+          <button class="cbtn" title="Play"  onclick="ctrl('rmd','play')">▶</button>
+          <button class="cbtn" title="Pause" onclick="ctrl('rmd','pause')" id="rmd-pause" disabled>⏸</button>
+          <button class="cbtn" title="Reset" onclick="ctrl('rmd','reset')">↺</button>
+          <button class="cbtn" title="Prev"  onclick="ctrl('rmd','prev')">‹</button>
+          <button class="cbtn" title="Next"  onclick="ctrl('rmd','next')">›</button>
+          <span class="step-ind" id="rmd-ind">—</span>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- PARSE TREE -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-icon" style="background:#f0fdf4">🌳</div>
+    <div>
+      <div class="ch-title">Parse Tree</div>
+      <div class="ch-sub">Animated construction · nodes show <em>Variable → derived substring</em></div>
+    </div>
+  </div>
+  <div class="tree-card-body">
+    <div id="rule-box">
+      <div class="rb-label">Rule Applied</div>
+      <div class="rb-rule" id="rule-text">—</div>
+    </div>
+    <div id="ambiguity-banner">
+      <div class="ambig-icon">⚠️</div>
+      <div class="ambig-body">
+        <div class="ambig-title">
+          <span class="ambig-badge">Ambiguous</span>
+          This CFG is ambiguous for the given string
+        </div>
+        <div class="ambig-desc">
+          Multiple distinct parse trees can derive <b id="ambig-string-label"></b> from this grammar.
+          One of the possible parse trees is displayed below.
+        </div>
+      </div>
+    </div>
+    <div id="tree-wrap">
+      <div class="ph">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="4" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19" cy="18" r="2"/>
+          <line x1="12" y1="6" x2="5" y2="16"/><line x1="12" y1="6" x2="12" y2="16"/><line x1="12" y1="6" x2="19" y2="16"/>
+        </svg>
+        <p>Parse tree will appear here after generation</p>
+      </div>
+    </div>
+  </div>
+  <div class="tree-anim-ctrl">
+    <button class="cbtn cbtn-animate" title="Animate from start" onclick="treeCtrl('animate')" id="tree-animate">▶ Animate</button>
+    <button class="cbtn" title="Pause" onclick="treeCtrl('pause')" id="tree-pause" disabled>⏸</button>
+    <button class="cbtn" title="Reset to full tree" onclick="treeCtrl('reset')">↺</button>
+    <button class="cbtn" title="Prev"  onclick="treeCtrl('prev')">‹</button>
+    <button class="cbtn" title="Next"  onclick="treeCtrl('next')">›</button>
+    <span class="step-ind" id="tree-ind">—</span>
+  </div>
+</div>
+
+<!-- EXAMPLES -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-icon" style="background:#fefce8">📚</div>
+    <div>
+      <div class="ch-title">Example Grammars</div>
+      <div class="ch-sub">Click any card to load and run instantly</div>
+    </div>
+  </div>
+  <div class="card-body" style="padding:16px">
+    <div class="ex-grid">
+      <div class="ex-card" onclick="loadEx(0)">
+        <div class="ex-stripe" style="background:linear-gradient(90deg,#2055d4,#6d28d9)"></div>
+        <div class="ex-name">Example 1 · Simple</div>
+        <div class="ex-grammar">S -> AB
+A -> aA | a
+B -> bB | b</div>
+        <div class="ex-str">String: <b>aaabbb</b></div>
+      </div>
+      <div class="ex-card" onclick="loadEx(1)">
+        <div class="ex-stripe" style="background:linear-gradient(90deg,#16a34a,#0891b2)"></div>
+        <div class="ex-name">Example 2 · aⁿbⁿ</div>
+        <div class="ex-grammar">S -> aSb | ε</div>
+        <div class="ex-str">String: <b>aabb</b></div>
+      </div>
+      <div class="ex-card" onclick="loadEx(2)">
+        <div class="ex-stripe" style="background:linear-gradient(90deg,#ea580c,#dc2626)"></div>
+        <div class="ex-name">Example 3 · Valid Parentheses</div>
+        <div class="ex-grammar">S -> SS | () | (S)</div>
+        <div class="ex-str">String: <b>((()()))((()))()</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEFINITIONS -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-icon" style="background:#fefce8">💡</div>
+    <div>
+      <div class="ch-title">Concept Definitions</div>
+      <div class="ch-sub">Key terms in Context-Free Grammars</div>
+    </div>
+  </div>
+  <div class="card-body" style="padding:16px">
+    <div class="defs-grid">
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">📐</span>CFG</div>
+        <div class="def-card-body">A formal system of variables, terminals, and production rules used to generate strings in a language.</div>
+        <code class="def-card-ex">G = (V, Σ, R, S)</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">🔠</span>Variables (Non-terminals)</div>
+        <div class="def-card-body">Symbols that can be expanded using production rules. They appear on the left-hand side of productions.</div>
+        <code class="def-card-ex">S, A, B, C</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">🔡</span>Terminals</div>
+        <div class="def-card-body">Symbols that appear in the final derived string and cannot be expanded further.</div>
+        <code class="def-card-ex">a, b, 0, 1, (, )</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">⚙️</span>Production Rules</div>
+        <div class="def-card-body">Rules defining how a variable can be replaced by a sequence of variables and/or terminals.</div>
+        <code class="def-card-ex">A -> aA | a
+S -> aSb | ε</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">⬅️</span>Leftmost Derivation</div>
+        <div class="def-card-body">A derivation where the leftmost non-terminal in the sentential form is replaced at every step.</div>
+        <code class="def-card-ex">S ⇒ AB ⇒ aAB ⇒ aaB ⇒ aabb</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">➡️</span>Rightmost Derivation</div>
+        <div class="def-card-body">A derivation where the rightmost non-terminal in the sentential form is replaced at every step.</div>
+        <code class="def-card-ex">S ⇒ AB ⇒ AbB ⇒ Abb ⇒ aabb</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">🌳</span>Parse Tree</div>
+        <div class="def-card-body">A tree showing how a string is derived from the start variable. Internal nodes are variables; leaves are terminals or ε.</div>
+        <code class="def-card-ex">Root = start variable
+Leaves = terminals</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">∅</span>Epsilon (ε)</div>
+        <div class="def-card-body">The empty string. A production A → ε means variable A can derive nothing — it disappears from the sentential form.</div>
+        <code class="def-card-ex">S -> aSb | ε</code>
+      </div>
+      <div class="def-card">
+        <div class="def-card-title"><span class="def-card-icon">🔁</span>Sentential Form</div>
+        <div class="def-card-body">Any intermediate string of variables and terminals produced during a derivation, starting from the start symbol.</div>
+        <code class="def-card-ex">S → aAB → aaB → aabB</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 0. QUICK INSERT HELPERS
+// ══════════════════════════════════════════════════════════════════
+function insertIntoGram(text) {
+  const ta = document.getElementById('gram');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const val = ta.value;
+  ta.value = val.slice(0, start) + text + val.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + text.length;
+  ta.focus();
+}
+
+function insertEpsilonInGram() {
+  // Insert " | ε" which the parser will recognize as an epsilon alternative
+  insertIntoGram(' | ε');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 0. VALIDATION (from claude 12)
+// ══════════════════════════════════════════════════════════════════
+function isVarName(s) {
+  return /^[A-Z][0-9]*$/.test(s);
+}
+
+function validateAndParse(gramText, startVar, inputStr) {
+  const errors = [];
+
+  const lines = gramText.trim().split('\n').map(l => l.trim()).filter(l => l);
+  const definedVars = new Set();
+  const lhsCounts = {};
+  const rawProds = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+    const arrowIdx = line.indexOf('->');
+    if (arrowIdx === -1) {
+      errors.push(`Missing "->" in: "${line}"`);
+      continue;
+    }
+    const lhs = line.slice(0, arrowIdx).trim();
+    const rhsRaw = line.slice(arrowIdx + 2).trim();
+
+    if (!lhs) { errors.push(`Empty left-hand side in: "${line}"`); continue; }
+    if (!isVarName(lhs)) {
+      errors.push(`LHS must be a single capital letter (optionally followed by digits) — got: "${lhs}" in "${line}"`);
+      continue;
+    }
+    lhsCounts[lhs] = (lhsCounts[lhs] || 0) + 1;
+    definedVars.add(lhs);
+
+    if (!rhsRaw && !line.includes('|')) {
+      errors.push(`Empty RHS in: "${line}" — use the ε button to insert an epsilon alternative`);
+      continue;
+    }
+
+    const altStrings = rhsRaw.split('|');
+    rawProds.push({ lhs, altStrings, lineRaw: line });
+  }
+
+  for (const [v, cnt] of Object.entries(lhsCounts)) {
+    if (cnt > 1) errors.push(`Variable "${v}" is defined ${cnt} times — each variable must appear on LHS exactly once`);
+  }
+
+  if (errors.length) return { errors };
+
+  const rules = {};
+  for (const { lhs, altStrings, lineRaw } of rawProds) {
+    if (!rules[lhs]) rules[lhs] = [];
+    for (const altRaw of altStrings) {
+      const trimmed = altRaw.trim();
+      if (trimmed === '' || trimmed === 'ε') {
+        rules[lhs].push([]);
+        continue;
+      }
+      let tokErr = null;
+      const tokens = tokenizeStrict(trimmed, definedVars, (e) => { tokErr = e; });
+      if (tokErr) {
+        errors.push(`In rule "${lineRaw}": ${tokErr}`);
+        continue;
+      }
+      rules[lhs].push(tokens);
+    }
+  }
+
+  if (errors.length) return { errors };
+
+  if (!startVar) { errors.push('Start variable is required'); return { errors }; }
+  if (!isVarName(startVar)) { errors.push(`Start variable "${startVar}" must be a capital letter optionally followed by digits`); return { errors }; }
+  if (!rules[startVar]) { errors.push(`Start variable "${startVar}" is not defined in the grammar`); return { errors }; }
+
+  if (inputStr) {
+    const inputTokens = tokenizeInput(inputStr, definedVars);
+    for (const t of inputTokens) {
+      if (definedVars.has(t)) {
+        errors.push(`Input string contains variable "${t}" — input must consist of terminals only`);
+      }
+    }
+  }
+
+  if (errors.length) return { errors };
+  return { rules, errors: [] };
+}
+
+function tokenizeStrict(s, definedVars, onError) {
+  const out = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === ' ') { i++; continue; }
+    if (s[i] === 'ε') { i++; continue; } // ε is handled at the alt level
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      let sym = s[i++];
+      while (i < s.length && s[i] >= '0' && s[i] <= '9') sym += s[i++];
+      if (!definedVars.has(sym)) {
+        onError(`Variable "${sym}" used in RHS but not defined as a LHS in the grammar`);
+        return null;
+      }
+      out.push(sym);
+    } else {
+      out.push(s[i++]);
+    }
+  }
+  return out;
+}
+
+function tokenizeInput(s, definedVars) {
+  const out = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      let sym = s[i++];
+      while (i < s.length && s[i] >= '0' && s[i] <= '9') sym += s[i++];
+      out.push(sym);
+    } else {
+      out.push(s[i++]);
+    }
+  }
+  return out;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 1. GRAMMAR PARSER (from claude 9)
+// ══════════════════════════════════════════════════════════════════
+function parseGrammarText(text) {
+  const rules = {};
+  for (const raw of text.trim().split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    const arrowIdx = line.indexOf('->');
+    if (arrowIdx === -1) continue;
+    const lhs = line.slice(0, arrowIdx).trim();
+    const rhsRaw = line.slice(arrowIdx + 2).trim();
+    if (!lhs) continue;
+    const alts = rhsRaw.split('|');
+    if (!rules[lhs]) rules[lhs] = [];
+    for (const alt of alts) {
+      const trimmed = alt.trim();
+      rules[lhs].push(trimmed === '' || trimmed === 'ε' ? [] : tokenize(trimmed));
+    }
+  }
+  return rules;
+}
+
+function tokenize(s) {
+  const out = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === ' ') { i++; continue; }
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      let sym = s[i++];
+      if (i < s.length && s[i] >= '0' && s[i] <= '9') sym += s[i++];
+      out.push(sym);
+    } else {
+      out.push(s[i++]);
+    }
+  }
+  return out;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 2. cfgDpSubstring4  — from claude 9
+// ══════════════════════════════════════════════════════════════════
+function cfgDpSubstring4(rules, startingVariable, inputString) {
+  const n = inputString.length;
+  const levels = {};
+  const MAX_LEVELS = 100;
+
+  const seen = {};
+  for (const v in rules) seen[v] = new Set();
+
+  function isValid(s) {
+    return (s === '' || inputString.includes(s)) && s.length <= n;
+  }
+
+  function getAllStringsForVar(varName, upToLevel) {
+    const result = new Set();
+    for (let lvl = 1; lvl <= upToLevel; lvl++) {
+      if (levels[lvl] && levels[lvl][varName]) {
+        for (const x of levels[lvl][varName]) result.add(x);
+      }
+    }
+    return result;
+  }
+
+  function expandProduction(symbols, available) {
+    let candidates = new Set(['']);
+    for (const sym of symbols) {
+      if (sym === '') continue;
+      const newCandidates = new Set();
+      if (available[sym] !== undefined) {
+        for (const prefix of candidates) {
+          for (const expansion of available[sym]) {
+            const combined = prefix + expansion;
+            if (isValid(combined)) newCandidates.add(combined);
+          }
+        }
+      } else {
+        for (const prefix of candidates) {
+          const combined = prefix + sym;
+          if (isValid(combined)) newCandidates.add(combined);
+        }
+      }
+      candidates = newCandidates;
+      if (candidates.size === 0) break;
+    }
+    return candidates;
+  }
+
+  // Level 1: terminal-only productions
+  const level1 = {};
+  for (const varName in rules) {
+    for (const prod of rules[varName]) {
+      if (prod.every(sym => sym === '' || !(sym in rules))) {
+        const str = prod.filter(sym => sym !== '').join('');
+        if (isValid(str) && !seen[varName].has(str)) {
+          if (!level1[varName]) level1[varName] = new Set();
+          level1[varName].add(str);
+          seen[varName].add(str);
+        }
+      }
+    }
+  }
+  levels[1] = level1;
+
+  if (level1[startingVariable] && level1[startingVariable].has(inputString)) {
+    return { levels, success: true, level: 1 };
+  }
+
+  for (let lvl = 2; lvl <= MAX_LEVELS; lvl++) {
+    const currentLevel = {};
+    for (const varName in rules) {
+      for (const prod of rules[varName]) {
+        if (prod.every(sym => sym === '' || !(sym in rules))) continue;
+        const available = {};
+        let skip = false;
+        for (const sym of prod) {
+          if (sym in rules) {
+            const s = getAllStringsForVar(sym, lvl - 1);
+            if (s.size === 0) { skip = true; break; }
+            available[sym] = s;
+          }
+        }
+        if (skip) continue;
+        const candidates = expandProduction(prod, available);
+        const novel = new Set([...candidates].filter(x => !seen[varName].has(x)));
+        if (novel.size > 0) {
+          if (!currentLevel[varName]) currentLevel[varName] = new Set();
+          for (const x of novel) {
+            currentLevel[varName].add(x);
+            seen[varName].add(x);
+          }
+        }
+      }
+    }
+    levels[lvl] = currentLevel;
+    if (currentLevel[startingVariable] && currentLevel[startingVariable].has(inputString)) {
+      return { levels, success: true, level: lvl };
+    }
+    const anyNew = Object.values(currentLevel).some(s => s.size > 0);
+    if (!anyNew) break;
+  }
+  return { levels, success: false, level: null };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 3. buildParseTree — from claude 9 (memoized + depth-limited, epsilon-safe)
+// ══════════════════════════════════════════════════════════════════
+function buildParseTree(rules, levels, startVar, inputString, level) {
+  const MAX_DEPTH = 200;
+
+  function producedBefore(varName, s, lvl) {
+    for (let l = 1; l < lvl; l++) {
+      if (levels[l] && levels[l][varName] && levels[l][varName].has(s)) return true;
+    }
+    return false;
+  }
+
+  function cloneNode(node) {
+    if (!node) return null;
+    return {
+      symbol: node.symbol,
+      string: node.string,
+      isEpsilon: node.isEpsilon || false,
+      children: node.children.map(cloneNode)
+    };
+  }
+
+  const memo = {};
+  const inProgress = new Set();
+
+  function backtrack(varName, string, lvl, depth) {
+    if (depth > MAX_DEPTH) return null;
+
+    const key = `${varName}|${string}|${lvl}`;
+    if (inProgress.has(key)) return null;
+    if (key in memo) {
+      return memo[key] ? cloneNode(memo[key]) : null;
+    }
+
+    inProgress.add(key);
+    const node = { symbol: varName, string, children: [] };
+
+    for (const prod of rules[varName]) {
+      if (prod.every(sym => !(sym in rules))) {
+        const candidate = prod.filter(s => s !== '').join('');
+        if (candidate === string) {
+          if (string === '') {
+            node.children = [{ symbol: 'ε', string: '', children: [], isEpsilon: true }];
+          } else {
+            node.children = prod.filter(s => s !== '').map(sym => ({ symbol: sym, string: sym, children: [] }));
+          }
+          memo[key] = node;
+          inProgress.delete(key);
+          return cloneNode(node);
+        }
+        continue;
+      }
+
+      function trySplit(i, pos, children) {
+        if (i === prod.length) return pos === string.length ? children : null;
+        const sym = prod[i];
+
+        if (sym in rules) {
+          const ends = [];
+          for (let e = pos + 1; e <= string.length; e++) ends.push(e);
+          ends.push(pos); // epsilon last
+
+          for (const end of ends) {
+            const part = string.slice(pos, end);
+            if (!producedBefore(sym, part, lvl)) continue;
+            const child = backtrack(sym, part, lvl, depth + 1);
+            if (child === null) continue;
+            const res = trySplit(i + 1, end, [...children, child]);
+            if (res) return res;
+          }
+        } else {
+          if (string.startsWith(sym, pos)) {
+            const child = { symbol: sym, string: sym, children: [] };
+            const res = trySplit(i + 1, pos + sym.length, [...children, child]);
+            if (res) return res;
+          }
+        }
+        return null;
+      }
+
+      const result = trySplit(0, 0, []);
+      if (result) {
+        node.children = result;
+        memo[key] = node;
+        inProgress.delete(key);
+        return cloneNode(node);
+      }
+    }
+
+    memo[key] = null;
+    inProgress.delete(key);
+    return null;
+  }
+
+  return backtrack(startVar, inputString, level, 0);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 4. DERIVATION EXTRACTION FROM PARSE TREE (from claude 9)
+// ══════════════════════════════════════════════════════════════════
+function extractDerivation(treeRoot, rules, mode) {
+  function isExpandable(node) {
+    return (node.symbol in rules) && node.children && node.children.length > 0 && !node.isEpsilon;
+  }
+
+  const steps = [];
+  let form = [treeRoot];
+  steps.push({ form: form.slice(), replacedIdx: -1, newNodes: [] });
+
+  while (true) {
+    let idx = -1;
+    if (mode === 'lmd') {
+      for (let i = 0; i < form.length; i++) {
+        if (isExpandable(form[i])) { idx = i; break; }
+      }
+    } else {
+      for (let i = form.length - 1; i >= 0; i--) {
+        if (isExpandable(form[i])) { idx = i; break; }
+      }
+    }
+    if (idx === -1) break;
+
+    const node = form[idx];
+    const kids = node.children;
+    const newForm = [...form.slice(0, idx), ...kids, ...form.slice(idx + 1)];
+
+    // Build rule string
+    const childSyms = kids.map(c => c.isEpsilon ? 'ε' : c.symbol).join(' ');
+    const ruleStr = `${node.symbol} → ${childSyms || 'ε'}`;
+
+    steps.push({ form: newForm.slice(), replacedIdx: idx, replacedSym: node.symbol, newNodes: kids, prevForm: form.slice(), rule: ruleStr });
+    form = newForm;
+  }
+
+  return steps;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 5. RENDER DERIVATION STEPS (from claude 12 UI style with rule badges)
+// ══════════════════════════════════════════════════════════════════
+function buildStepHTML(step, steps, i, rules, startVar) {
+  const nextStep = steps[i + 1];
+  const newStart = step.replacedIdx;
+  const newEnd = step.replacedIdx !== -1 ? step.replacedIdx + (step.newNodes ? step.newNodes.length : 0) : -1;
+
+  if (step.form.length === 0) return '<span class="term eps">ε</span>';
+
+  let formHtml = '';
+  step.form.forEach((node, j) => {
+    const isEps = node.isEpsilon || node.symbol === 'ε';
+    const isNt = !isEps && (node.symbol in rules) && node.children && node.children.length > 0;
+    const sym = isEps ? 'ε' : node.symbol;
+    const wasInserted = (step.replacedIdx !== -1 && j >= newStart && j < newEnd);
+    const willBeReplaced = (nextStep && nextStep.replacedIdx === j && isNt);
+    let cls;
+    if (willBeReplaced) cls = 'hl-var';
+    else if (wasInserted) cls = isEps ? 'term eps hl-new' : (isNt ? 'nt hl-new' : 'term hl-new');
+    else cls = isEps ? 'term eps' : (isNt ? 'nt' : 'term');
+    formHtml += `<span class="${cls}">${sym}</span>`;
+  });
+  return formHtml;
+}
+
+function renderDerivationSteps(containerId, steps, rules, currentIdx, startVar) {
+  const container = document.getElementById(containerId);
+  if (!steps || steps.length === 0) {
+    container.innerHTML = '<div class="ph"><p>No steps found</p></div>';
+    return;
+  }
+  container.innerHTML = '';
+
+  steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-row vis' + (i === currentIdx ? ' active' : '');
+    div.id = `${containerId}-s${i}`;
+
+    const numEl = document.createElement('span');
+    numEl.className = 'snum';
+    numEl.textContent = `Step ${i + 1}`;
+    div.appendChild(numEl);
+
+    if (i > 0) {
+      const arr = document.createElement('span');
+      arr.className = 'sarrow';
+      arr.textContent = '⇒';
+      div.appendChild(arr);
+    }
+
+    const strEl = document.createElement('span');
+    strEl.className = 'sstr';
+    const sv = startVar || steps[0].form[0]?.symbol || 'S';
+    const formHtml = buildStepHTML(step, steps, i, rules, sv);
+    strEl.innerHTML = `<span class="nt" style="margin-right:4px">${sv}</span><span style="color:var(--text3);margin-right:4px">→</span>${formHtml}`;
+    div.appendChild(strEl);
+
+    // Rule badge
+    if (i > 0 && step.rule) {
+      const ruleEl = document.createElement('span');
+      ruleEl.className = 'srule';
+      ruleEl.textContent = step.rule;
+      div.appendChild(ruleEl);
+    }
+
+    container.appendChild(div);
+  });
+
+  scrollToStep(containerId, currentIdx);
+}
+
+function updateActiveStep(containerId, steps, rules, currentIdx) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.step-row').forEach(el => el.classList.remove('active'));
+  const activeEl = document.getElementById(`${containerId}-s${currentIdx}`);
+  if (activeEl) activeEl.classList.add('active');
+  scrollToStep(containerId, currentIdx);
+}
+
+function scrollToStep(containerId, idx) {
+  if (idx < 0) return;
+  setTimeout(() => {
+    const el = document.getElementById(`${containerId}-s${idx}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 40);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 6. PARSE TREE SVG RENDERER (from claude 12 — with arrowheads)
+// ══════════════════════════════════════════════════════════════════
+function renderTreeSVG(root, rules) {
+  const R = 22, H_PAD = 12, V_GAP = 68;
+
+  function measure(node) {
+    if (!node.children || node.children.length === 0) {
+      node._w = R * 2 + H_PAD; return;
+    }
+    node.children.forEach(measure);
+    node._w = Math.max(R * 2 + H_PAD, node.children.reduce((s, c) => s + c._w, 0));
+  }
+
+  function layout(node, x, y) {
+    node._x = x; node._y = y;
+    if (!node.children || node.children.length === 0) return;
+    let cx = x - node._w / 2;
+    for (const c of node.children) {
+      layout(c, cx + c._w / 2, y + V_GAP);
+      cx += c._w;
+    }
+  }
+
+  function collect(node, nodes=[], edges=[]) {
+    nodes.push(node);
+    if (node.children) {
+      for (const c of node.children) {
+        edges.push({ x1: node._x, y1: node._y, x2: c._x, y2: c._y });
+        collect(c, nodes, edges);
+      }
+    }
+    return { nodes, edges };
+  }
+
+  measure(root);
+  const W = Math.max(root._w + 60, 300);
+  layout(root, W / 2, R + 20);
+  const { nodes, edges } = collect(root);
+  const H = Math.max(...nodes.map(n => n._y)) + R + 36;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+<defs>
+  <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#94a3b8"/>
+  </marker>
+</defs>
+<style>
+  .e{stroke:#cbd5e1;stroke-width:1.5;marker-end:url(#arr)}
+  .nn circle{fill:#dbeafe;stroke:#2055d4;stroke-width:2}
+  .tn circle{fill:#dcfce7;stroke:#16a34a;stroke-width:2}
+  .en circle{fill:#fef9c3;stroke:#f59e0b;stroke-width:2}
+  .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;dominant-baseline:middle;text-anchor:middle}
+  .nlbl{fill:#1e40af}.tlbl{fill:#15803d}.elbl{fill:#92400e}
+  .sublbl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:400;dominant-baseline:middle;text-anchor:middle;fill:#94a3b8}
+</style>`;
+
+  for (const e of edges) {
+    const dx = e.x2 - e.x1, dy = e.y2 - e.y1;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = dx/dist, ny = dy/dist;
+    const x1s = e.x1 + nx*R, y1s = e.y1 + ny*R;
+    const x2e = e.x2 - nx*(R+5), y2e = e.y2 - ny*(R+5);
+    svg += `<line class="e" x1="${x1s.toFixed(1)}" y1="${y1s.toFixed(1)}" x2="${x2e.toFixed(1)}" y2="${y2e.toFixed(1)}"/>`;
+  }
+
+  for (const n of nodes) {
+    const isEps = n.isEpsilon || n.symbol === 'ε';
+    const isNt = !isEps && (n.symbol in rules) && n.children && n.children.length > 0;
+    const cls = isEps ? 'en' : (isNt ? 'nn' : 'tn');
+    const lblCls = isEps ? 'elbl' : (isNt ? 'nlbl' : 'tlbl');
+    const label = isEps ? 'ε' : n.symbol;
+    const showSub = !isEps && n.string !== undefined && n.string !== n.symbol && n.string !== '';
+    svg += `<g class="${cls}" transform="translate(${n._x},${n._y})">
+  <circle r="${R}"/>
+  <text class="lbl ${lblCls}" y="${showSub ? -5 : 0}">${label}</text>
+  ${showSub ? `<text class="sublbl" y="9">${n.string}</text>` : ''}
+</g>`;
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 7. PARSE TREE ANIMATION (from claude 9)
+// ══════════════════════════════════════════════════════════════════
+const TA = { steps: [], cur: -1, timer: null, playing: false, rules: {}, tree: null, nodeMap: {} };
+
+function buildTreeAnimSteps(root, rules) {
+  let idCounter = 0;
+  const nodeMap = {};
+  const steps = [];
+
+  function assignIds(node, parentId) {
+    node._id = idCounter++;
+    node._parentId = parentId;
+    nodeMap[node._id] = node;
+    if (node.children) node.children.forEach(c => assignIds(c, node._id));
+  }
+  assignIds(root, null);
+
+  const queue = [root];
+  while (queue.length) {
+    const node = queue.shift();
+    const isNt = !node.isEpsilon && (node.symbol in rules) && node.children && node.children.length > 0;
+    if (isNt) {
+      const childSyms = node.children.map(c => c.isEpsilon ? 'ε' : c.symbol).join(' ');
+      const ruleStr = `${node.symbol} → ${childSyms}`;
+      steps.push({ nodeId: node._id, rule: ruleStr, childIds: node.children.map(c => c._id) });
+      node.children.forEach(c => queue.push(c));
+    }
+  }
+
+  return { steps, nodeMap };
+}
+
+function renderTreeAnimFrame(tree, rules, nodeMap, steps, stepIdx) {
+  const visibleIds = new Set();
+  const highlightId = stepIdx >= 0 && stepIdx < steps.length ? steps[stepIdx].nodeId : null;
+  const newChildIds = stepIdx >= 0 && stepIdx < steps.length ? new Set(steps[stepIdx].childIds) : new Set();
+
+  visibleIds.add(tree._id);
+  for (let i = 0; i <= stepIdx && i < steps.length; i++) {
+    steps[i].childIds.forEach(id => visibleIds.add(id));
+  }
+
+  const R = 22, H_PAD = 12, V_GAP = 68;
+
+  function measure(node) {
+    if (!node.children || node.children.length === 0) { node._w = R*2+H_PAD; return; }
+    node.children.forEach(measure);
+    node._w = Math.max(R*2+H_PAD, node.children.reduce((s,c) => s+c._w, 0));
+  }
+  function layout(node, x, y) {
+    node._x = x; node._y = y;
+    if (!node.children || node.children.length === 0) return;
+    let cx = x - node._w/2;
+    for (const c of node.children) { layout(c, cx+c._w/2, y+V_GAP); cx += c._w; }
+  }
+  function collectAll(node, nodes=[], edges=[]) {
+    nodes.push(node);
+    if (node.children) {
+      for (const c of node.children) {
+        edges.push({ x1:node._x, y1:node._y, x2:c._x, y2:c._y, parentId:node._id, childId:c._id });
+        collectAll(c, nodes, edges);
+      }
+    }
+    return { nodes, edges };
+  }
+
+  measure(tree);
+  const W = Math.max(tree._w+60, 300);
+  layout(tree, W/2, R+20);
+  const { nodes, edges } = collectAll(tree);
+  const H = Math.max(...nodes.map(n => n._y)) + R + 36;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+<defs>
+  <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#94a3b8"/>
+  </marker>
+</defs>
+<style>
+  .e{stroke:#cbd5e1;stroke-width:1.5;marker-end:url(#arr)}
+  .nn circle{fill:#dbeafe;stroke:#2055d4;stroke-width:2}
+  .tn circle{fill:#dcfce7;stroke:#16a34a;stroke-width:2}
+  .en circle{fill:#fef9c3;stroke:#f59e0b;stroke-width:2}
+  .node-hl circle{fill:#fef3c7!important;stroke:#f59e0b!important;stroke-width:3.5!important}
+  .node-new circle{fill:#dcfce7!important;stroke:#16a34a!important;stroke-width:2.5!important}
+  .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;dominant-baseline:middle;text-anchor:middle}
+  .nlbl{fill:#1e40af}.tlbl{fill:#15803d}.elbl{fill:#92400e}.hllbl{fill:#92400e}
+  .sublbl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:400;dominant-baseline:middle;text-anchor:middle;fill:#94a3b8}
+</style>`;
+
+  // Edges
+  for (const e of edges) {
+    if (!visibleIds.has(e.parentId) || !visibleIds.has(e.childId)) continue;
+    const dx=e.x2-e.x1, dy=e.y2-e.y1, dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const nx=dx/dist, ny=dy/dist;
+    const x1s=(e.x1+nx*R).toFixed(1), y1s=(e.y1+ny*R).toFixed(1);
+    const x2e=(e.x2-nx*(R+5)).toFixed(1), y2e=(e.y2-ny*(R+5)).toFixed(1);
+    svg += `<line class="e" x1="${x1s}" y1="${y1s}" x2="${x2e}" y2="${y2e}"/>`;
+  }
+
+  // Nodes
+  for (const n of nodes) {
+    if (!visibleIds.has(n._id)) continue;
+    const isEps = n.isEpsilon || n.symbol === 'ε';
+    const isNt = !isEps && (n.symbol in rules) && n.children && n.children.length > 0;
+    const isHL = n._id === highlightId;
+    const isNew = newChildIds.has(n._id);
+    let cls = isEps ? 'en' : (isNt ? 'nn' : 'tn');
+    if (isHL) cls += ' node-hl';
+    else if (isNew) cls += ' node-new';
+    const lblCls = isHL ? 'hllbl' : (isEps ? 'elbl' : (isNt ? 'nlbl' : 'tlbl'));
+    const label = isEps ? 'ε' : n.symbol;
+    const showSub = !isEps && n.string !== undefined && n.string !== n.symbol && n.string !== '';
+    svg += `<g class="${cls}" transform="translate(${n._x},${n._y})">
+  <circle r="${R}"/>
+  <text class="lbl ${lblCls}" y="${showSub ? -5 : 0}">${label}</text>
+  ${showSub ? `<text class="sublbl" y="9">${n.string}</text>` : ''}
+</g>`;
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function treeAnimRender() {
+  if (!TA.tree) return;
+  const stepIdx = TA.cur;
+  const svg = renderTreeAnimFrame(TA.tree, TA.rules, TA.nodeMap, TA.steps, stepIdx);
+  document.getElementById('tree-wrap').innerHTML = svg;
+
+  const rb = document.getElementById('rule-box');
+  if (stepIdx >= 0 && stepIdx < TA.steps.length) {
+    document.getElementById('rule-text').textContent = TA.steps[stepIdx].rule;
+    rb.classList.add('show');
+  } else {
+    rb.classList.remove('show');
+  }
+
+  const total = TA.steps.length;
+  document.getElementById('tree-ind').textContent = total ? `${Math.max(stepIdx+1,1)} / ${total}` : '—';
+}
+
+function treeCtrl(action) {
+  if (!TA.tree) return;
+  const pauseBtn = document.getElementById('tree-pause');
+
+  if (action === 'animate') {
+    TA.playing = false; clearTimeout(TA.timer);
+    TA.cur = -1; treeAnimRender();
+    TA.playing = true; pauseBtn.disabled = false;
+    treeAnimNext();
+  } else if (action === 'pause') {
+    TA.playing = false; clearTimeout(TA.timer); pauseBtn.disabled = true;
+  } else if (action === 'reset') {
+    TA.playing = false; clearTimeout(TA.timer); pauseBtn.disabled = true;
+    TA.cur = TA.steps.length - 1; treeAnimRender();
+  } else if (action === 'prev') {
+    TA.playing = false; clearTimeout(TA.timer); pauseBtn.disabled = true;
+    if (TA.cur > -1) TA.cur--; treeAnimRender();
+  } else if (action === 'next') {
+    TA.playing = false; clearTimeout(TA.timer); pauseBtn.disabled = true;
+    if (TA.cur < TA.steps.length - 1) TA.cur++; treeAnimRender();
+  }
+}
+
+function treeAnimNext() {
+  if (!TA.playing) return;
+  if (TA.cur < TA.steps.length - 1) {
+    TA.cur++;
+    treeAnimRender();
+    TA.timer = setTimeout(treeAnimNext, 950);
+  } else {
+    TA.playing = false;
+    document.getElementById('tree-pause').disabled = true;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 8. ANIMATION STATE & CONTROLS (derivations)
+// ══════════════════════════════════════════════════════════════════
+const A = {
+  lmd: { steps: [], cur: 0, timer: null, playing: false, rules: {} },
+  rmd: { steps: [], cur: 0, timer: null, playing: false, rules: {} },
+};
+
+function ctrl(which, action) {
+  const s = A[which];
+  if (!s.steps.length) return;
+  const pauseBtn = document.getElementById(`${which}-pause`);
+
+  if (action === 'play') {
+    if (s.playing) return;
+    s.playing = true; pauseBtn.disabled = false;
+    if (s.cur >= s.steps.length - 1) s.cur = 0;
+    animateNext(which);
+  } else if (action === 'pause') {
+    s.playing = false; clearTimeout(s.timer); pauseBtn.disabled = true;
+  } else if (action === 'reset') {
+    s.playing = false; clearTimeout(s.timer); pauseBtn.disabled = true;
+    s.cur = 0; renderAndScroll(which);
+  } else if (action === 'prev') {
+    s.playing = false; clearTimeout(s.timer); pauseBtn.disabled = true;
+    if (s.cur > 0) s.cur--; renderAndScroll(which);
+  } else if (action === 'next') {
+    s.playing = false; clearTimeout(s.timer); pauseBtn.disabled = true;
+    if (s.cur < s.steps.length - 1) s.cur++; renderAndScroll(which);
+  }
+}
+
+function animateNext(which) {
+  const s = A[which];
+  if (!s.playing) return;
+  if (s.cur < s.steps.length - 1) {
+    s.cur++;
+    renderAndScroll(which);
+    s.timer = setTimeout(() => animateNext(which), 1000);
+  } else {
+    s.playing = false;
+    document.getElementById(`${which}-pause`).disabled = true;
+  }
+}
+
+function renderAndScroll(which) {
+  const s = A[which];
+  updateActiveStep(`${which}-list`, s.steps, s.rules, s.cur);
+  document.getElementById(`${which}-ind`).textContent = s.steps.length ? `${s.cur + 1} / ${s.steps.length}` : '—';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 9b. AMBIGUITY DETECTION
+// A CFG is ambiguous for a string if it has ≥2 distinct parse trees.
+// Strategy: run a full backtracking search that collects ALL parse trees
+// (up to 2) by not stopping at the first result. If we find 2, ambiguous.
+// ══════════════════════════════════════════════════════════════════
+function detectAmbiguity(rules, levels, startVar, inputString, level) {
+  const MAX_DEPTH = 200;
+  const MAX_TREES = 2; // we only need to find 2 to confirm ambiguity
+
+  // Serialize a tree to a canonical string for structural comparison
+  function serializeTree(node) {
+    if (!node) return 'null';
+    const childStr = (node.children || []).map(serializeTree).join(',');
+    return `${node.symbol}[${childStr}]`;
+  }
+
+  function producedBefore(varName, s, lvl) {
+    for (let l = 1; l < lvl; l++) {
+      if (levels[l] && levels[l][varName] && levels[l][varName].has(s)) return true;
+    }
+    return false;
+  }
+
+  const foundTrees = [];
+
+  function backtrackAll(varName, string, lvl, depth) {
+    if (depth > MAX_DEPTH) return;
+    if (foundTrees.length >= MAX_TREES) return;
+
+    const node = { symbol: varName, string, children: [] };
+
+    for (const prod of rules[varName]) {
+      if (foundTrees.length >= MAX_TREES) return;
+
+      if (prod.every(sym => !(sym in rules))) {
+        // Terminal-only production
+        const candidate = prod.filter(s => s !== '').join('');
+        if (candidate === string) {
+          const childNode = JSON.parse(JSON.stringify(node)); // fresh copy
+          if (string === '') {
+            childNode.children = [{ symbol: 'ε', string: '', children: [], isEpsilon: true }];
+          } else {
+            childNode.children = prod.filter(s => s !== '').map(sym => ({
+              symbol: sym, string: sym, children: []
+            }));
+          }
+          const ser = serializeTree(childNode);
+          if (!foundTrees.some(t => serializeTree(t) === ser)) {
+            foundTrees.push(childNode);
+          }
+        }
+        continue;
+      }
+
+      // Mixed/recursive production — try all splits
+      function trySplitAll(i, pos, childrenSoFar) {
+        if (foundTrees.length >= MAX_TREES) return;
+        if (i === prod.length) {
+          if (pos !== string.length) return;
+          // Build full node
+          const completedNode = { symbol: varName, string, children: childrenSoFar };
+          const ser = serializeTree(completedNode);
+          if (!foundTrees.some(t => serializeTree(t) === ser)) {
+            foundTrees.push(completedNode);
+          }
+          return;
+        }
+
+        const sym = prod[i];
+        if (sym in rules) {
+          // Try all possible spans for this non-terminal (including ε)
+          const ends = [];
+          for (let e = pos + 1; e <= string.length; e++) ends.push(e);
+          ends.push(pos); // epsilon last
+
+          for (const end of ends) {
+            if (foundTrees.length >= MAX_TREES) return;
+            const part = string.slice(pos, end);
+            if (!producedBefore(sym, part, lvl)) continue;
+
+            // Recurse: collect all sub-trees for (sym, part)
+            const savedCount = foundTrees.length;
+            const subTrees = collectSubTrees(sym, part, lvl, depth + 1);
+            for (const subTree of subTrees) {
+              if (foundTrees.length >= MAX_TREES) return;
+              trySplitAll(i + 1, end, [...childrenSoFar, subTree]);
+            }
+          }
+        } else {
+          // Terminal symbol
+          if (string.startsWith(sym, pos)) {
+            const termChild = { symbol: sym, string: sym, children: [] };
+            trySplitAll(i + 1, pos + sym.length, [...childrenSoFar, termChild]);
+          }
+        }
+      }
+
+      trySplitAll(0, 0, []);
+    }
+  }
+
+  // Collect all sub-trees for a (var, string) pair without polluting foundTrees
+  function collectSubTrees(varName, string, lvl, depth) {
+    if (depth > MAX_DEPTH) return [];
+    const results = [];
+    const MAX_SUB = 4; // limit subtree enumeration to keep it fast
+
+    for (const prod of rules[varName]) {
+      if (results.length >= MAX_SUB) break;
+
+      if (prod.every(sym => !(sym in rules))) {
+        const candidate = prod.filter(s => s !== '').join('');
+        if (candidate === string) {
+          const node = { symbol: varName, string, children: [] };
+          if (string === '') {
+            node.children = [{ symbol: 'ε', string: '', children: [], isEpsilon: true }];
+          } else {
+            node.children = prod.filter(s => s !== '').map(sym => ({
+              symbol: sym, string: sym, children: []
+            }));
+          }
+          const ser = serializeTree(node);
+          if (!results.some(t => serializeTree(t) === ser)) results.push(node);
+        }
+        continue;
+      }
+
+      function trySub(i, pos, childrenSoFar) {
+        if (results.length >= MAX_SUB) return;
+        if (i === prod.length) {
+          if (pos !== string.length) return;
+          const node = { symbol: varName, string, children: childrenSoFar };
+          const ser = serializeTree(node);
+          if (!results.some(t => serializeTree(t) === ser)) results.push(node);
+          return;
+        }
+        const sym = prod[i];
+        if (sym in rules) {
+          const ends = [];
+          for (let e = pos + 1; e <= string.length; e++) ends.push(e);
+          ends.push(pos);
+          for (const end of ends) {
+            if (results.length >= MAX_SUB) return;
+            const part = string.slice(pos, end);
+            if (!producedBefore(sym, part, lvl)) continue;
+            const subTrees = collectSubTrees(sym, part, lvl, depth + 1);
+            for (const st of subTrees) {
+              if (results.length >= MAX_SUB) return;
+              trySub(i + 1, end, [...childrenSoFar, st]);
+            }
+          }
+        } else {
+          if (string.startsWith(sym, pos)) {
+            const termChild = { symbol: sym, string: sym, children: [] };
+            trySub(i + 1, pos + sym.length, [...childrenSoFar, termChild]);
+          }
+        }
+      }
+      trySub(0, 0, []);
+    }
+    return results;
+  }
+
+  try {
+    backtrackAll(startVar, inputString, level, 0);
+    return foundTrees.length >= 2;
+  } catch(e) {
+    return false; // fail safe — don't block the main flow
+  }
+}
+
+function showAmbiguityBanner(inputStr) {
+  const banner = document.getElementById('ambiguity-banner');
+  document.getElementById('ambig-string-label').textContent =
+    inputStr ? `"${inputStr}"` : 'ε (empty string)';
+  banner.classList.add('show');
+}
+function hideAmbiguityBanner() {
+  document.getElementById('ambiguity-banner').classList.remove('show');
+}
+
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.className = `status show status-${type}`;
+  el.innerHTML = msg;
+}
+function hideStatus() { document.getElementById('status').className = 'status'; }
+function setPH(id, msg) { document.getElementById(id).innerHTML = `<div class="ph"><p>${msg}</p></div>`; }
+
+function showValErrors(errs) {
+  const box = document.getElementById('val-errors');
+  const list = document.getElementById('val-err-list');
+  list.innerHTML = errs.map(e => `<div class="val-err-item">${e}</div>`).join('');
+  box.classList.add('show');
+}
+function hideValErrors() {
+  document.getElementById('val-errors').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 10. MAIN GENERATE (claude 9 DP parser + claude 12 validation)
+// ══════════════════════════════════════════════════════════════════
+function onGenerate() {
+  hideStatus();
+  hideValErrors();
+  hideAmbiguityBanner();
+
+  const gramText = document.getElementById('gram').value.trim();
+  const startVar = document.getElementById('start').value.trim();
+  const inputStr = document.getElementById('istr').value.trim();
+
+  if (!gramText) { showStatus('⚠ Please enter a grammar.', 'err'); return; }
+  if (!startVar) { showStatus('⚠ Please enter a start variable.', 'err'); return; }
+
+  // Run validation from claude 12
+  const validation = validateAndParse(gramText, startVar, inputStr);
+  if (validation.errors.length > 0) {
+    showValErrors(validation.errors);
+    showStatus(`⚠ ${validation.errors.length} validation error${validation.errors.length > 1 ? 's' : ''} — fix the grammar before continuing.`, 'err');
+    return;
+  }
+  const rules = validation.rules;
+
+  showStatus('⏳ Running parser…', 'info');
+
+  setTimeout(() => {
+    let result;
+    try { result = cfgDpSubstring4(rules, startVar, inputStr); }
+    catch (e) { showStatus('⚠ Parser error: ' + e.message, 'err'); return; }
+
+    const { levels, success, level } = result;
+
+    if (!success) {
+      showStatus(`✗ String "<b>${inputStr || 'ε'}</b>" cannot be derived from the given grammar.`, 'err');
+      setPH('lmd-list', 'String not in language — no derivation');
+      setPH('rmd-list', 'String not in language — no derivation');
+      setPH('tree-wrap', 'No parse tree available');
+      A.lmd.steps = []; A.rmd.steps = [];
+      document.getElementById('lmd-ind').textContent = '—';
+      document.getElementById('rmd-ind').textContent = '—';
+      return;
+    }
+
+    let tree;
+    try { tree = buildParseTree(rules, levels, startVar, inputStr, level); }
+    catch (e) { showStatus('⚠ Tree construction error: ' + e.message, 'err'); return; }
+
+    if (!tree) {
+      showStatus('✗ Parse succeeded but parse tree could not be built. Try a different grammar.', 'err'); return;
+    }
+
+    showStatus(`✓ String accepted — Parse tree and derivations ready.`, 'ok');
+
+    // Detect ambiguity (separate from the main parse — runs after success)
+    try {
+      const isAmbiguous = detectAmbiguity(rules, levels, startVar, inputStr, level);
+      if (isAmbiguous) showAmbiguityBanner(inputStr);
+    } catch(e) { /* fail safe */ }
+
+    // Setup tree animation
+    const { steps: taSteps, nodeMap } = buildTreeAnimSteps(tree, rules);
+    TA.tree = tree; TA.rules = rules; TA.steps = taSteps; TA.nodeMap = nodeMap;
+    TA.cur = taSteps.length - 1; TA.playing = false; clearTimeout(TA.timer);
+    document.getElementById('tree-pause').disabled = true;
+    treeAnimRender();
+
+    // Extract derivations
+    const lmdSteps = extractDerivation(tree, rules, 'lmd');
+    const rmdSteps = extractDerivation(tree, rules, 'rmd');
+
+    A.lmd.steps = lmdSteps; A.lmd.cur = 0; A.lmd.playing = false; A.lmd.rules = rules;
+    A.rmd.steps = rmdSteps; A.rmd.cur = 0; A.rmd.playing = false; A.rmd.rules = rules;
+    clearTimeout(A.lmd.timer); clearTimeout(A.rmd.timer);
+
+    renderDerivationSteps('lmd-list', lmdSteps, rules, 0, startVar);
+    renderDerivationSteps('rmd-list', rmdSteps, rules, 0, startVar);
+    document.getElementById('lmd-ind').textContent = lmdSteps.length ? `1 / ${lmdSteps.length}` : '—';
+    document.getElementById('rmd-ind').textContent = rmdSteps.length ? `1 / ${rmdSteps.length}` : '—';
+    document.getElementById('lmd-pause').disabled = true;
+    document.getElementById('rmd-pause').disabled = true;
+  }, 10);
+}
+
+function onClear() {
+  hideStatus();
+  hideValErrors();
+  hideAmbiguityBanner();
+  document.getElementById('gram').value = '';
+  document.getElementById('start').value = '';
+  document.getElementById('istr').value = '';
+  setPH('lmd-list', 'Generate to see steps');
+  setPH('rmd-list', 'Generate to see steps');
+  document.getElementById('tree-wrap').innerHTML = `<div class="ph">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="4" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19" cy="18" r="2"/>
+      <line x1="12" y1="6" x2="5" y2="16"/><line x1="12" y1="6" x2="12" y2="16"/><line x1="12" y1="6" x2="19" y2="16"/>
+    </svg><p>Parse tree will appear here after generation</p></div>`;
+  ['lmd','rmd'].forEach(w => {
+    A[w].steps=[]; A[w].cur=0; A[w].playing=false;
+    clearTimeout(A[w].timer);
+    document.getElementById(`${w}-pause`).disabled=true;
+    document.getElementById(`${w}-ind`).textContent='—';
+  });
+  TA.tree=null; TA.steps=[]; TA.cur=-1; TA.playing=false;
+  clearTimeout(TA.timer);
+  document.getElementById('tree-pause').disabled=true;
+  document.getElementById('tree-ind').textContent='—';
+  document.getElementById('rule-box').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 11. EXAMPLE GRAMMARS
+// ══════════════════════════════════════════════════════════════════
+const EXAMPLES = [
+  { gram: "S -> AB\nA -> aA | a\nB -> bB | b", start: "S", str: "aaabbb" },
+  { gram: "S -> aSb | ε", start: "S", str: "aabb" },
+  { gram: "S -> SS | () | (S) ", start: "S", str: "((()()))((()))()" },
+];
+
+function loadEx(i) {
+  const ex = EXAMPLES[i];
+  document.getElementById('gram').value = ex.gram;
+  document.getElementById('start').value = ex.start;
+  document.getElementById('istr').value = ex.str;
+  onGenerate();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 12. DARK MODE
+// ══════════════════════════════════════════════════════════════════
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('dark-icon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('dark-label').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  document.getElementById('dark-btn').title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  try { localStorage.setItem('cfg-dark', isDark ? '1' : '0'); } catch(e) {}
+}
+
+(function() {
+  try {
+    if (localStorage.getItem('cfg-dark') === '1') {
+      document.body.classList.add('dark');
+      document.getElementById('dark-icon').textContent = '☀️';
+      document.getElementById('dark-label').textContent = 'Light Mode';
+      document.getElementById('dark-btn').title = 'Switch to light mode';
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
