@@ -99,7 +99,7 @@ main{max-width:1220px;margin:0 auto;padding:32px 24px;display:flex;flex-directio
 .ch-sub{font-size:12px;color:var(--text3);margin-top:1px}
 .card-body{padding:24px}
 
-.input-grid{display:grid;grid-template-columns:1fr 160px 200px;gap:16px;align-items:start}
+.input-grid{display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start}
 label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
 textarea,input[type=text]{
   width:100%;font-family:var(--mono);font-size:12.5px;
@@ -270,7 +270,87 @@ svg .node-new circle{fill:#dcfce7!important;stroke:#16a34a!important;stroke-widt
   header{padding:0 16px}
   main{padding:16px 12px}
   .defs-grid{grid-template-columns:1fr}
+  .input-with-presets{flex-direction:column!important}
+  .preset-panel{max-height:220px!important;width:100%!important;min-width:unset!important;max-width:unset!important}
 }
+
+/* ── PRESET SYSTEM ── */
+.input-with-presets{display:flex;gap:16px;align-items:flex-start}
+.input-main{flex:1;min-width:0}
+.preset-panel{
+  width:320px;min-width:280px;max-width:340px;
+  display:flex;flex-direction:column;gap:0;
+  border:1.5px solid var(--border);border-radius:var(--r);
+  background:var(--surface2);overflow:hidden;
+  flex-shrink:0;
+}
+.preset-panel-head{
+  padding:9px 12px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:7px;
+}
+.preset-panel-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;flex:1}
+.preset-count{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);
+  background:var(--surface3);border-radius:20px;padding:1px 7px}
+.preset-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.preset-item{
+  padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);
+  transition:background .15s;display:flex;align-items:flex-start;gap:7px;
+  position:relative;
+}
+.preset-item:last-child{border-bottom:none}
+.preset-item:hover{background:var(--blue-light)}
+.preset-item:hover .preset-del{opacity:1}
+.preset-item-num{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--text3);
+  min-width:15px;margin-top:1px;flex-shrink:0}
+.preset-item-body{flex:1;min-width:0}
+.preset-item-gram{font-family:var(--mono);font-size:10.5px;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;line-height:1.4}
+.preset-item-meta{font-size:10px;color:var(--text3);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preset-del{
+  position:absolute;top:6px;right:7px;
+  width:18px;height:18px;border-radius:4px;border:none;
+  background:var(--red-light);color:var(--red);cursor:pointer;
+  font-size:10px;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;flex-shrink:0;padding:0;line-height:1;
+}
+.preset-del:hover{background:var(--red);color:#fff}
+.preset-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 12px;color:var(--text3);font-size:11px;text-align:center;gap:4px;flex:1;
+}
+.preset-empty-icon{font-size:20px;opacity:.4}
+.preset-actions{
+  padding:8px;border-top:1px solid var(--border);background:var(--surface);
+  display:flex;gap:6px;
+}
+.preset-save-btn{
+  flex:1;padding:6px 8px;border-radius:6px;border:1.5px solid var(--blue);
+  background:var(--blue);color:#fff;cursor:pointer;font-size:11px;font-weight:700;
+  font-family:var(--sans);transition:all .15s;
+}
+.preset-save-btn:hover{background:#1a44b8;border-color:#1a44b8}
+.preset-io-btn{
+  flex:1;height:32px;border-radius:6px;border:1.5px solid var(--border);
+  background:var(--surface2);color:var(--text2);cursor:pointer;
+  font-size:11px;font-weight:700;font-family:var(--sans);
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  transition:all .15s;padding:0 8px;white-space:nowrap;
+}
+.preset-io-btn:hover{background:var(--surface3);border-color:var(--border2);color:var(--text)}
+.preset-io-btn[title*="Download"]:hover{background:var(--green-light);border-color:#86efac;color:var(--green)}
+.preset-io-btn[title*="Upload"]:hover{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.preset-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+  padding:9px 16px;font-size:12.5px;font-weight:600;color:var(--text);
+  box-shadow:var(--shadow-md);z-index:9999;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
+}
+.preset-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.preset-toast.ok{border-color:#86efac;background:var(--green-light);color:#15803d}
+.preset-toast.err{border-color:#fca5a5;background:var(--red-light);color:var(--red)}
+.preset-toast.info{border-color:var(--blue-mid);background:var(--blue-light);color:var(--blue)}
 </style>
 </head>
 <body>
@@ -304,34 +384,61 @@ svg .node-new circle{fill:#dcfce7!important;stroke:#16a34a!important;stroke-widt
       <div class="val-err-title">⚠ Validation Errors</div>
       <div id="val-err-list"></div>
     </div>
-    <div class="input-grid">
-      <div>
-        <label>Productions</label>
-        <textarea id="gram" spellcheck="false">S -> AB
+    <div class="input-with-presets">
+      <div class="input-main">
+        <div class="input-grid">
+          <div>
+            <label>Productions</label>
+            <textarea id="gram" spellcheck="false">S -> AB
 A -> aA | a
 B -> bB | b</textarea>
-        <p class="hint">Separate alternatives with <code>|</code>. Use the <b>ε</b> button to insert an epsilon (empty) alternative.</p>
-        <div class="quick-insert">
-          <span class="quick-insert-label">Insert:</span>
-          <button class="qbtn" title="Insert arrow (->)" onclick="insertIntoGram(' -> ')">→</button>
-          <button class="qbtn" title="Insert pipe (|)" onclick="insertIntoGram(' | ')">|</button>
-          <button class="qbtn" title="Insert epsilon (empty alternative)" onclick="insertEpsilonInGram()">ε</button>
+            <p class="hint">Separate alternatives with <code>|</code>. Use the <b>ε</b> button to insert an epsilon (empty) alternative.</p>
+            <div class="quick-insert">
+              <span class="quick-insert-label">Insert:</span>
+              <button class="qbtn" title="Insert arrow (->)" onclick="insertIntoGram(' -> ')">→</button>
+              <button class="qbtn" title="Insert pipe (|)" onclick="insertIntoGram(' | ')">|</button>
+              <button class="qbtn" title="Insert epsilon (empty alternative)" onclick="insertEpsilonInGram()">ε</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <label>Start Variable</label>
+              <input type="text" id="start" value="S" maxlength="8"/>
+              <p class="hint">Must match a production LHS.</p>
+            </div>
+            <div>
+              <label>Input String</label>
+              <input type="text" id="istr" value="aaabbb"/>
+              <p class="hint">Terminals only. Leave empty for ε.</p>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="onGenerate()">▶&nbsp; Generate</button>
+          <button class="btn btn-ghost" onclick="onClear()">✕&nbsp; Clear</button>
         </div>
       </div>
-      <div>
-        <label>Start Variable</label>
-        <input type="text" id="start" value="S" maxlength="8"/>
-        <p class="hint">Must match a production LHS.</p>
+      <!-- PRESET PANEL -->
+      <div class="preset-panel" id="preset-panel">
+        <div class="preset-panel-head">
+          <span class="preset-panel-title">Saved Presets</span>
+          <span class="preset-count" id="preset-count">0 / 25</span>
+        </div>
+        <div class="preset-list" id="preset-list">
+          <div class="preset-empty">
+            <span class="preset-empty-icon">📂</span>
+            <span>No presets yet.<br>Save a grammar to start.</span>
+          </div>
+        </div>
+        <div class="preset-actions" style="flex-direction:column;gap:6px">
+          <button class="preset-save-btn" onclick="presetSave()">+ Save Current</button>
+          <div style="display:flex;gap:6px;width:100%">
+            <button class="preset-io-btn" title="Download presets as JSON" onclick="presetDownload()">⬇ Download</button>
+            <button class="preset-io-btn" title="Upload presets from JSON" onclick="document.getElementById('preset-file-in').click()">⬆ Upload</button>
+          </div>
+          <input type="file" id="preset-file-in" accept=".json" style="display:none" onchange="presetUpload(event)"/>
+        </div>
       </div>
-      <div>
-        <label>Input String</label>
-        <input type="text" id="istr" value="aaabbb"/>
-        <p class="hint">Terminals only. Leave empty for ε.</p>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="onGenerate()">▶&nbsp; Generate</button>
-      <button class="btn btn-ghost" onclick="onClear()">✕&nbsp; Clear</button>
     </div>
   </div>
 </div>
@@ -597,8 +704,8 @@ function validateAndParse(gramText, startVar, inputStr) {
     lhsCounts[lhs] = (lhsCounts[lhs] || 0) + 1;
     definedVars.add(lhs);
 
-    if (!rhsRaw && !line.includes('|')) {
-      errors.push(`Empty RHS in: "${line}" — use the ε button to insert an epsilon alternative`);
+    if (!rhsRaw) {
+      errors.push(`Empty RHS in: "${line}" — use ε for an empty (epsilon) production, e.g. S -> ε`);
       continue;
     }
 
@@ -617,7 +724,12 @@ function validateAndParse(gramText, startVar, inputStr) {
     if (!rules[lhs]) rules[lhs] = [];
     for (const altRaw of altStrings) {
       const trimmed = altRaw.trim();
-      if (trimmed === '' || trimmed === 'ε') {
+      if (trimmed === '') {
+        // Empty alternative: reject with a helpful error
+        errors.push(`Empty alternative found in rule "${lineRaw}" — use ε (epsilon) for an empty production, not a blank alternative`);
+        continue;
+      }
+      if (trimmed === 'ε') {
         rules[lhs].push([]);
         continue;
       }
@@ -655,7 +767,11 @@ function tokenizeStrict(s, definedVars, onError) {
   let i = 0;
   while (i < s.length) {
     if (s[i] === ' ') { i++; continue; }
-    if (s[i] === 'ε') { i++; continue; } // ε is handled at the alt level
+    if (s[i] === 'ε') {
+      // ε appearing here means it wasn't a standalone epsilon alt — flag it
+      onError(`ε (epsilon) must be used alone as an alternative, not mixed with other symbols — write "| ε" not "| aε"`);
+      return null;
+    }
     if (s[i] >= 'A' && s[i] <= 'Z') {
       let sym = s[i++];
       while (i < s.length && s[i] >= '0' && s[i] <= '9') sym += s[i++];
@@ -1022,8 +1138,13 @@ function renderDerivationSteps(containerId, steps, rules, currentIdx, startVar) 
     const strEl = document.createElement('span');
     strEl.className = 'sstr';
     const sv = startVar || steps[0].form[0]?.symbol || 'S';
-    const formHtml = buildStepHTML(step, steps, i, rules, sv);
-    strEl.innerHTML = `<span class="nt" style="margin-right:4px">${sv}</span><span style="color:var(--text3);margin-right:4px">→</span>${formHtml}`;
+    if (i === 0) {
+      // Step 1: show only the start variable (highlighted as the variable about to be expanded)
+      strEl.innerHTML = `<span class="hl-var">${sv}</span>`;
+    } else {
+      const formHtml = buildStepHTML(step, steps, i, rules, sv);
+      strEl.innerHTML = `<span class="nt" style="margin-right:4px">${sv}</span><span style="color:var(--text3);margin-right:4px">→</span>${formHtml}`;
+    }
     div.appendChild(strEl);
 
     // Rule badge
@@ -1440,6 +1561,7 @@ function onGenerate() {
     }
 
     showStatus(`✓ String accepted — Parse tree and derivations ready.`, 'ok');
+    setTimeout(syncPresetHeight, 50);
 
     // Setup tree animation
     const { steps: taSteps, nodeMap } = buildTreeAnimSteps(tree, rules);
@@ -1507,6 +1629,175 @@ function loadEx(i) {
   document.getElementById('istr').value = ex.str;
   onGenerate();
 }
+
+// ══════════════════════════════════════════════════════════════════
+// 11b. GRAMMAR PRESET SYSTEM
+// ══════════════════════════════════════════════════════════════════
+const PRESET_MAX = 25;
+let presets = [];
+
+function presetSave() {
+  const gram = document.getElementById('gram').value.trim();
+  const start = document.getElementById('start').value.trim();
+  const istr = document.getElementById('istr').value.trim();
+
+  if (!gram) { presetToast('⚠ Grammar is empty — nothing to save.', 'err'); return; }
+  if (!start) { presetToast('⚠ Start variable is empty.', 'err'); return; }
+
+  // Validate grammar + start var (NOT string derivability — that's not an error)
+  const validation = validateAndParse(gram, start, istr);
+  if (validation.errors.length > 0) {
+    showValErrors(validation.errors);
+    showStatus(`⚠ ${validation.errors.length} validation error${validation.errors.length > 1 ? 's' : ''} — fix before saving.`, 'err');
+    presetToast('⚠ Fix validation errors before saving.', 'err');
+    return;
+  }
+
+  if (presets.length >= PRESET_MAX) {
+    presetToast(`⚠ Max ${PRESET_MAX} presets reached. Delete one first.`, 'err'); return;
+  }
+
+  presets.push({ gram, start, istr });
+  presetRender();
+  presetToast('✓ Preset saved!', 'ok');
+}
+
+function presetLoad(idx) {
+  const p = presets[idx];
+  if (!p) return;
+  document.getElementById('gram').value = p.gram;
+  document.getElementById('start').value = p.start;
+  document.getElementById('istr').value = p.istr;
+  hideStatus();
+  hideValErrors();
+  onGenerate();
+}
+
+function presetDelete(idx, evt) {
+  evt.stopPropagation();
+  presets.splice(idx, 1);
+  presetRender();
+  presetToast('Preset removed.', 'info');
+}
+
+function presetRender() {
+  const list = document.getElementById('preset-list');
+  const count = document.getElementById('preset-count');
+  count.textContent = `${presets.length} / ${PRESET_MAX}`;
+
+  if (presets.length === 0) {
+    list.innerHTML = `<div class="preset-empty"><span class="preset-empty-icon">📂</span><span>No presets yet.<br>Save a grammar to start.</span></div>`;
+    return;
+  }
+
+  // Make panel list height match .input-main (capped by CSS)
+  list.innerHTML = presets.map((p, i) => {
+    const firstLine = p.gram.split('\n')[0].trim();
+    const preview = firstLine.length > 26 ? firstLine.slice(0, 24) + '…' : firstLine;
+    const meta = `S: ${p.start}${p.istr ? ' · "' + (p.istr.length > 10 ? p.istr.slice(0,9)+'…' : p.istr) + '"' : ' · ε'}`;
+    return `<div class="preset-item" onclick="presetLoad(${i})">
+      <span class="preset-item-num">${i+1}</span>
+      <div class="preset-item-body">
+        <div class="preset-item-gram">${escHtml(preview)}</div>
+        <div class="preset-item-meta">${escHtml(meta)}</div>
+      </div>
+      <button class="preset-del" onclick="presetDelete(${i},event)" title="Delete preset">✕</button>
+    </div>`;
+  }).join('');
+
+  // Sync panel height to input-main
+  syncPresetHeight();
+}
+
+function syncPresetHeight() {
+  const inputMain = document.querySelector('.input-main');
+  const panel = document.getElementById('preset-panel');
+  const list = document.getElementById('preset-list');
+  if (!inputMain || !panel) return;
+  const h = inputMain.offsetHeight;
+  if (h > 0) {
+    panel.style.maxHeight = h + 'px';
+    // preset-list gets remaining height (panel minus head ~40px and actions ~50px)
+    list.style.maxHeight = (h - 90) + 'px';
+    list.style.overflowY = 'auto';
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Download presets as JSON
+function presetDownload() {
+  if (presets.length === 0) { presetToast('No presets to download.', 'info'); return; }
+  const blob = new Blob([JSON.stringify(presets, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cfg_presets.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  presetToast(`⬇ Downloaded ${presets.length} preset${presets.length>1?'s':''}.`, 'ok');
+}
+
+// Upload presets from JSON
+function presetUpload(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let data;
+    try { data = JSON.parse(e.target.result); }
+    catch { presetToast('⚠ Invalid JSON file.', 'err'); evt.target.value=''; return; }
+
+    if (!Array.isArray(data)) { presetToast('⚠ JSON must be an array of presets.', 'err'); evt.target.value=''; return; }
+
+    let added = 0, skippedGrammarErr = 0;
+    const available = PRESET_MAX - presets.length;
+
+    for (const item of data) {
+      if (added >= available) break; // respect max 25 total
+      const gram = (item.gram || '').trim();
+      const start = (item.start || '').trim();
+      const istr = (item.istr || '').trim();
+
+      if (!gram || !start) { skippedGrammarErr++; continue; }
+
+      // Validate grammar structure only (not string derivability)
+      const v = validateAndParse(gram, start, istr);
+      if (v.errors.length > 0) { skippedGrammarErr++; continue; }
+
+      presets.push({ gram, start, istr });
+      added++;
+    }
+
+    presetRender();
+    evt.target.value = '';
+
+    let msg = `✓ Imported ${added} preset${added!==1?'s':''}.`;
+    if (skippedGrammarErr > 0) msg += ` ${skippedGrammarErr} skipped (grammar error).`;
+    presetToast(msg, added > 0 ? 'ok' : 'info');
+  };
+  reader.readAsText(file);
+}
+
+// Toast notification
+let _toastTimer = null;
+function presetToast(msg, type) {
+  let el = document.getElementById('preset-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'preset-toast';
+    el.className = 'preset-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.className = `preset-toast show ${type||'info'}`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2800);
+}
+
+// Sync heights after render and on resize
+window.addEventListener('resize', syncPresetHeight);
+window.addEventListener('load', () => setTimeout(syncPresetHeight, 100));
 
 // ══════════════════════════════════════════════════════════════════
 // 12. DARK MODE
