@@ -421,20 +421,20 @@ B -> bB | b</textarea>
       <!-- PRESET PANEL -->
       <div class="preset-panel" id="preset-panel">
         <div class="preset-panel-head">
-          <span class="preset-panel-title">Saved Presets</span>
+          <span class="preset-panel-title">Saved Grammer Sets</span>
           <span class="preset-count" id="preset-count">0 / 25</span>
         </div>
         <div class="preset-list" id="preset-list">
           <div class="preset-empty">
             <span class="preset-empty-icon">📂</span>
-            <span>No presets yet.<br>Save a grammar to start.</span>
+            <span>No Grammer Set yet.<br>Save a grammar to start.</span>
           </div>
         </div>
         <div class="preset-actions" style="flex-direction:column;gap:6px">
           <button class="preset-save-btn" onclick="presetSave()">+ Save Current</button>
           <div style="display:flex;gap:6px;width:100%">
-            <button class="preset-io-btn" title="Download presets as JSON" onclick="presetDownload()">⬇ Download</button>
-            <button class="preset-io-btn" title="Upload presets from JSON" onclick="document.getElementById('preset-file-in').click()">⬆ Upload</button>
+            <button class="preset-io-btn" title="Download Grammer Sets as JSON" onclick="presetDownload()">⬇ Download</button>
+            <button class="preset-io-btn" title="Upload Grammer Sets from JSON" onclick="document.getElementById('preset-file-in').click()">⬆ Upload</button>
           </div>
           <input type="file" id="preset-file-in" accept=".json" style="display:none" onchange="presetUpload(event)"/>
         </div>
@@ -1654,12 +1654,12 @@ function presetSave() {
   }
 
   if (presets.length >= PRESET_MAX) {
-    presetToast(`⚠ Max ${PRESET_MAX} presets reached. Delete one first.`, 'err'); return;
+    presetToast(`⚠ Max ${PRESET_MAX} Grammer Sets reached. Delete one first.`, 'err'); return;
   }
 
   presets.push({ gram, start, istr });
   presetRender();
-  presetToast('✓ Preset saved!', 'ok');
+  presetToast('✓ Grammer Set saved!', 'ok');
 }
 
 function presetLoad(idx) {
@@ -1686,7 +1686,7 @@ function presetRender() {
   count.textContent = `${presets.length} / ${PRESET_MAX}`;
 
   if (presets.length === 0) {
-    list.innerHTML = `<div class="preset-empty"><span class="preset-empty-icon">📂</span><span>No presets yet.<br>Save a grammar to start.</span></div>`;
+    list.innerHTML = `<div class="preset-empty"><span class="preset-empty-icon">📂</span><span>No Grammer Sets yet.<br>Save a grammar to start.</span></div>`;
     return;
   }
 
@@ -1701,7 +1701,7 @@ function presetRender() {
         <div class="preset-item-gram">${escHtml(preview)}</div>
         <div class="preset-item-meta">${escHtml(meta)}</div>
       </div>
-      <button class="preset-del" onclick="presetDelete(${i},event)" title="Delete preset">✕</button>
+      <button class="preset-del" onclick="presetDelete(${i},event)" title="Delete Grammer Set">✕</button>
     </div>`;
   }).join('');
 
@@ -1729,7 +1729,7 @@ function escHtml(s) {
 
 // Download presets as JSON
 function presetDownload() {
-  if (presets.length === 0) { presetToast('No presets to download.', 'info'); return; }
+  if (presets.length === 0) { presetToast('No Grammer Set to download.', 'info'); return; }
   const blob = new Blob([JSON.stringify(presets, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1748,7 +1748,7 @@ function presetUpload(evt) {
     try { data = JSON.parse(e.target.result); }
     catch { presetToast('⚠ Invalid JSON file.', 'err'); evt.target.value=''; return; }
 
-    if (!Array.isArray(data)) { presetToast('⚠ JSON must be an array of presets.', 'err'); evt.target.value=''; return; }
+    if (!Array.isArray(data)) { presetToast('⚠ JSON must be an array of Grammer Sets.', 'err'); evt.target.value=''; return; }
 
     let added = 0, skippedGrammarErr = 0;
     const available = PRESET_MAX - presets.length;
